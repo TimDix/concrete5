@@ -28,6 +28,7 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
     protected $proxyBlock = false;
     protected $bActionCID;
     protected $cacheSettings;
+    protected $bFilename;
 
     public static function populateManually($blockInfo, $c, $a)
     {
