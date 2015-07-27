@@ -10,6 +10,7 @@ use User;
 class DatabaseHandler extends AbstractProcessingHandler
 {
     private $statement;
+    private $initialized;
 
     protected function write(array $record)
     {

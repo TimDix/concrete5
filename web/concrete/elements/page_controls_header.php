@@ -31,7 +31,7 @@ if (!$dh->inDashboard()) {
 	if ($c->isEditMode()) {
 		$startEditMode = 'new Concrete.EditMode();';
 	}
-	if ($cp->canEditPageContents() && $_REQUEST['ctask'] == 'check-out-first') {
+	if ($cp->canEditPageContents() && isset($_REQUEST['ctask']) && $_REQUEST['ctask'] == 'check-out-first') {
 		$pagetype = $c->getPageTypeObject();
 		if (is_object($pagetype) && $pagetype->doesPageTypeLaunchInComposer()) {
 			$launchPageComposer = "$('a[data-launch-panel=page]').toggleClass('ccm-launch-panel-active'); ConcretePanelManager.getByIdentifier('page').show();";
@@ -43,6 +43,9 @@ if (!$dh->inDashboard()) {
 	$panelAdd = URL::to('/ccm/system/panels/add');
 	$panelCheckIn = URL::to('/ccm/system/panels/page/check_in');
     $panelMultilingual = URL::to('/ccm/system/panels/multilingual');
+
+    $startEditMode = isset($startEditMode) ? $startEditMode : '';
+    $launchPageComposer = isset($launchPageComposer) ? $launchPageComposer : '';
 
 	$js = <<<EOL
 <script type="text/javascript">$(function() {
