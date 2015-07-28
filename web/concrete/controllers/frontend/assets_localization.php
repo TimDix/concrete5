@@ -376,7 +376,7 @@ jQuery.Redactor.opts.langs[<?=json_encode($locale)?>] = {
   columns: <?=json_encode(t('Columns'))?>,
   add_head: <?=json_encode(t('Add Head'))?>,
   delete_head: <?=json_encode(t('Delete Head'))?>,
-  title: <?=json_encode(t('Title'))?>,
+  title: <?=json_encode(t('Alt. Text'))?>,
   image_position: <?=json_encode(t('Position'))?>,
   none: <?=json_encode(t('None'))?>,
   left: <?=json_encode(t('Left'))?>,
