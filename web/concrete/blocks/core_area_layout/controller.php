@@ -8,6 +8,7 @@ use Concrete\Core\Area\Layout\ThemeGridLayout;
 use Concrete\Core\Area\SubArea;
 use Loader;
 use Concrete\Core\Block\BlockController;
+use Concrete\Core\Block\View\BlockViewTemplate;
 use Concrete\Core\Area\Layout\Layout as AreaLayout;
 use Concrete\Core\Area\Layout\Preset\Preset as AreaLayoutPreset;
 use Concrete\Core\Area\Layout\CustomLayout as CustomAreaLayout;
@@ -25,6 +26,9 @@ class Controller extends BlockController
     protected $btCacheBlockRecord = true;
     protected $btCacheSettingsInitialized = false;
 
+    protected $btAreaColumns = null;
+    protected $btAreaBlocks = null;
+
     public function getBlockTypeDescription()
     {
         return t("Proxy block for area layouts.");
@@ -35,12 +39,80 @@ class Controller extends BlockController
         return t("Area Layout");
     }
 
-    public function registerViewAssets()
+    public function registerViewAssets($output)
     {
         if (is_object($this->block) && $this->block->getBlockFilename() == 'parallax') {
             $this->requireAsset('javascript', 'jquery');
             $this->requireAsset('javascript', 'core/frontend/parallax-image');
         }
+
+        $b = $this->getBlockObject();
+        if (is_object($b) && $b->useBlockCache() && ) {
+
+            $blocks = $this->getAreaLayoutBlocks();
+
+            if($is_array($blocks)) {
+                foreach($blocks as $b) {
+                     $b->getController()->registerViewAssets(); //TODO: This is supposed to pass the block's output.
+                }
+            }
+        }
+    }
+
+    public function outputAutoHeaderItems()
+    {
+        $b = $this->getBlockObject();
+        if (is_object($b)) {
+            $bvt = new BlockViewTemplate($b);
+            $bvt->registerTemplateAssets();
+        }
+
+        $blocks = $this->getAreaLayoutBlocks();
+
+        if(is_array($blocks)) {
+            foreach($blocks as $b) {
+                 $b->getController()->outputAutoHeaderItems();
+            }
+        }
+    }
+
+    public function getAreaLayoutColumns()
+    {
+        if(!$this->btAreaColumns) {
+
+            $b = $this->getBlockObject();
+            if(is_object($b)) {
+                $a = $b->getBlockAreaObject();
+                $this->arLayout = $this->getAreaLayoutObject();
+
+                if (is_object($this->arLayout)) {
+                    $this->arLayout->setAreaObject($a);
+                    $this->btAreaColumns = $this->arLayout->getAreaLayoutColumns();
+                }
+            }
+        }
+
+        return $this->btAreaColumns;
+    }
+
+    public function getAreaLayoutBlocks()
+    {
+        if(!$this->btAreaBlocks) {
+            $columns = $this->getAreaLayoutColumns();
+
+            if(is_array($columns)) {
+                $blocks = array();
+
+                foreach ($columns as $column) {
+                    $sa = $column->getSubAreaObject();
+                    $blocks = array_merge($blocks, $sa->getAreaBlocksArray());
+                }
+
+                $this->btAreaBlocks = $blocks;
+            }
+        }
+
+        return $this->btAreaBlocks;
     }
 
     public function duplicate($newBID)
@@ -320,6 +392,7 @@ class Controller extends BlockController
         $this->set('maxColumns', $maxColumns);
         $this->requireAsset('core/style-customizer');
     }
+
     protected function setupCacheSettings()
     {
         if ($this->btCacheSettingsInitialized || Page::getCurrentPage()->isEditMode()) {
@@ -333,32 +406,22 @@ class Controller extends BlockController
         $btCacheBlockOutputOnPost = true;
         $btCacheBlockOutputLifetime = 0;
 
-        $b = $this->getBlockObject();
-        $a = $b->getBlockAreaObject();
-        $this->arLayout = $this->getAreaLayoutObject();
+        $blocks = $this->getAreaLayoutBlocks();
 
-        if (is_object($this->arLayout)) {
-            $this->arLayout->setAreaObject($a);
-            $columns = $this->arLayout->getAreaLayoutColumns();
+        if(is_array($blocks)) {
+            foreach($blocks as $b) {
+                $btCacheBlockOutput = $btCacheBlockOutput && $b->cacheBlockOutput();
 
-            foreach ($columns as $column) {
-                $sa = $column->getSubAreaObject();
-                $blocks = $sa->getAreaBlocksArray();
+                //As soon as we find something which cannot be cached, entire area cannot be cached, so stop checking.
+                if (!$btCacheBlockOutput) {
+                    return;
+                }
 
-                foreach ($blocks as $b) {
-                    $btCacheBlockOutput = $btCacheBlockOutput && $b->cacheBlockOutput();
+                $btCacheBlockOutputOnPost = $btCacheBlockOutputOnPost && $b->cacheBlockOutputOnPost();
 
-                    //As soon as we find something which cannot be cached, entire area cannot be cached, so stop checking.
-                    if (!$btCacheBlockOutput) {
-                        return;
-                    }
-
-                    $btCacheBlockOutputOnPost = $btCacheBlockOutputOnPost && $b->cacheBlockOutputOnPost();
-
-                    if ($expires = $b->getBlockOutputCacheLifetime()) {
-                        if ($expires && $btCacheBlockOutputLifetime < $expires) {
-                            $btCacheBlockOutputLifetime = $expires;
-                        }
+                if ($expires = $b->getBlockOutputCacheLifetime()) {
+                    if ($expires && $btCacheBlockOutputLifetime < $expires) {
+                        $btCacheBlockOutputLifetime = $expires;
                     }
                 }
             }
