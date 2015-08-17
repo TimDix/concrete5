@@ -208,6 +208,22 @@ class Block extends Object implements \Concrete\Core\Permission\ObjectInterface
         return false; // legacy. no more scrapbooks in the dashboard.
     }
 
+    protected function useBlockCache()
+    {
+       
+        if ($this->cacheBlockOutput()) 
+        {
+            $u = new User();
+            if ((!$u->isRegistered() || ($this->cacheBlockOutputForRegisteredUsers())) &&
+                (($_SERVER['REQUEST_METHOD'] != 'POST' || ($this->cacheBlockOutputOnPost() == true)))
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function getBlockCachedRecord()
     {
         return $this->btCachedBlockRecord;

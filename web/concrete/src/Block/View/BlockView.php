@@ -369,15 +369,9 @@ class BlockView extends AbstractView
 
     protected function useBlockCache()
     {
-        $u = new User();
-        if ($this->viewToRender == 'view' && Config::get('concrete.cache.blocks') && $this->block instanceof Block
-            && $this->block->cacheBlockOutput()
-        ) {
-            if ((!$u->isRegistered() || ($this->block->cacheBlockOutputForRegisteredUsers())) &&
-                (($_SERVER['REQUEST_METHOD'] != 'POST' || ($this->block->cacheBlockOutputOnPost() == true)))
-            ) {
-                return true;
-            }
+        if ($this->viewToRender == 'view' && Config::get('concrete.cache.blocks') && $this->block instanceof Block && $this->useBlockCache())
+        {
+            return true;
         }
 
         return false;
